@@ -3,7 +3,6 @@
   "displayName": "Universal Tasmota IR HVAC",
   "type": "module",
   "version": "1.0.0",
-  "private": true,
   "description": "Homebridge plugin for Tasmota IR HVAC via MQTT",
   "author": "Soum Axetuirk",
   "license": "MIT",
@@ -32,7 +31,7 @@
     "build": "rimraf dist && tsc",
     "watch": "tsc -w",
     "lint": "eslint . --max-warnings=0",
-    "prepublishOnly": "npm run lint && npm run build"
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "mqtt": "^5.10.0"
