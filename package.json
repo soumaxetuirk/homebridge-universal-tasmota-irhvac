@@ -1,0 +1,47 @@
+{
+  "name": "homebridge-universal-tasmota-irhvac",
+  "displayName": "Universal Tasmota IR HVAC",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Homebridge plugin for Tasmota IR HVAC via MQTT",
+  "author": "Soum Axetuirk",
+  "license": "MIT",
+  "homepage": "https://github.com/soumaxetuirk/homebridge-universal-tasmota-irhvac#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soumaxetuirk/homebridge-universal-tasmota-irhvac.git"
+  },
+  "bugs": {
+    "url": "https://github.com/soumaxetuirk/homebridge-universal-tasmota-irhvac/issues"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "tasmota",
+    "mqtt",
+    "ir",
+    "hvac",
+    "homekit"
+  ],
+  "main": "dist/index.js",
+  "engines": {
+    "node": "^20.18.0 || ^22.10.0 || ^24.0.0",
+    "homebridge": "^1.8.0 || ^2.0.0-beta.0"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "watch": "tsc -w",
+    "lint": "eslint . --max-warnings=0",
+    "prepublishOnly": "npm run lint && npm run build"
+  },
+  "dependencies": {
+    "mqtt": "^5.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "homebridge": "^1.11.4",
+    "rimraf": "^6.1.0",
+    "typescript": "^5.9.3"
+  }
+}

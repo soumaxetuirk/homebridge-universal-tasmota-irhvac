@@ -1,0 +1,101 @@
+{
+  "pluginAlias": "UniversalTasmotaIRHVAC",
+  "pluginType": "platform",
+  "singular": true,
+  "headerDisplay": "Universal Tasmota IR HVAC",
+  "schema": {
+    "type": "object",
+    "properties": {
+
+      "latitude": {
+        "type": "number",
+        "title": "Latitude",
+        "default": 40.7128,
+        "description": "Used to show current temperature in HomeKit using local weather data"
+      },
+
+      "longitude": {
+        "type": "number",
+        "title": "Longitude",
+        "default": -74.0060,
+        "description": "Used to show current temperature in HomeKit using local weather data"
+      },
+
+      "mqtt": {
+        "type": "object",
+        "title": "MQTT Configuration",
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "MQTT URL",
+            "default": "mqtt://127.0.0.1:1883"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "topicPublish": {
+            "type": "string",
+            "title": "Publish Topic",
+            "default": "cmnd/tasmota/IRHVAC"
+          },
+          "topicReceiveIR": {
+            "type": "string",
+            "title": "IR Receive Topic (optional)",
+            "default": "tele/tasmota/RESULT"
+          }
+        }
+      },
+
+      "devices": {
+        "type": "array",
+        "title": "HVAC Devices",
+        "items": {
+          "type": "object",
+          "properties": {
+
+            "name": {
+              "type": "string",
+              "title": "Device Name",
+              "default": "AC"
+            },
+
+            "vendor": {
+              "type": "string",
+              "title": "Vendor",
+              "default": "Tasmota AC"
+            },
+
+            "model": {
+              "type": "string",
+              "title": "Model",
+              "default": "1"
+            },
+
+            "manufacturer": {
+              "type": "string",
+              "title": "Manufacturer",
+              "default": "Tasmota AC"
+            },
+
+            "serial": {
+              "type": "string",
+              "title": "Serial Number",
+              "default": "000"
+            },
+
+            "version": {
+              "type": "string",
+              "title": "Firmware Version",
+              "default": "1"
+            }
+          }
+        }
+      }
+    }
+  }
+}
