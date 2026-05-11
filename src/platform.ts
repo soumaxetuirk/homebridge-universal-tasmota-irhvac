@@ -89,37 +89,61 @@ export class UniversalTasmotaPlatform implements DynamicPlatformPlugin {
   // -------------------------
   private async updateWeatherAndPush(service: Service) {
 
+    this.log.debug('WEATHER: updateWeatherAndPush() called');
+
     const now = Date.now();
 
-    // throttle 5 min
-    if (now - this.lastWeatherFetch < 5 * 60 * 1000) return;
+    if (now - this.lastWeatherFetch < 5 * 60 * 1000) {
+      this.log.debug('WEATHER: skipped (cached)');
+      return;
+    }
 
     const lat = this.config.latitude ?? 40.7128;
     const lon = this.config.longitude ?? -74.0060;
+
+    this.log.debug(`WEATHER: lat=${lat} lon=${lon}`);
 
     const url =
       `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat}&longitude=${lon}&current=temperature_2m`;
 
+    this.log.debug(`WEATHER URL: ${url}`);
+
     try {
+
+      this.log.debug('WEATHER: fetching...');
+
       const res = await fetch(url);
+
+      this.log.debug(`WEATHER: response status=${res.status}`);
+
       const json = (await res.json()) as OpenMeteoResponse;
+
+      this.log.debug(`WEATHER RAW: ${JSON.stringify(json)}`);
 
       const temp = json?.current?.temperature_2m;
 
+      this.log.debug(`WEATHER TEMP PARSED: ${temp}`);
+
       if (typeof temp === 'number') {
+
         this.weatherTemp = temp;
         this.lastWeatherFetch = now;
 
-        this.log.debug(`Weather updated: ${this.weatherTemp}°C`);
+        this.log.info(`Weather updated: ${this.weatherTemp}°C`);
 
         service.updateCharacteristic(
           this.Characteristic.CurrentTemperature,
           this.weatherTemp
         );
+
+        this.log.debug('WEATHER: characteristic updated');
       }
 
     } catch (err) {
+
+      this.log.error(`WEATHER ERROR: ${err}`);
+
       this.log.warn('Weather fetch failed, using cached value');
     }
   }
@@ -156,14 +180,8 @@ export class UniversalTasmotaPlatform implements DynamicPlatformPlugin {
         econo: false,
       };
 
-      // -------------------------
-      // INITIAL WEATHER LOAD
-      // -------------------------
       this.updateWeatherAndPush(service);
 
-      // -------------------------
-      // HELPERS
-      // -------------------------
       const getFan = () => {
         if (state.fan <= 20) return "Low";
         if (state.fan <= 60) return "Medium";
@@ -180,15 +198,35 @@ export class UniversalTasmotaPlatform implements DynamicPlatformPlugin {
       // -------------------------
       // IR SEND
       // -------------------------
-      const sendIR = async () => {
+      let sendTimer: NodeJS.Timeout | undefined;
 
-        if (!this.client || !this.client.connected) {
+const sendIR = () => {
+
+  if (sendTimer) {
+    clearTimeout(sendTimer);
+  }
+
+  sendTimer = setTimeout(async () => {
+
+        this.log.debug('SENDIR: called');
+
+        if (!this.client) {
+          this.log.error('SENDIR: mqtt client missing');
+          return;
+        }
+
+        this.log.debug(`SENDIR: mqtt connected=${this.client.connected}`);
+
+        if (!this.client.connected) {
           this.log.error('MQTT not connected - skipping IR send');
           return;
         }
 
-        // refresh weather before sending (light update, cached inside)
+        this.log.debug('SENDIR: before weather update');
+
         await this.updateWeatherAndPush(service);
+
+        this.log.debug('SENDIR: after weather update');
 
         const payload = {
           Vendor: device.vendor || "LG",
@@ -207,86 +245,97 @@ export class UniversalTasmotaPlatform implements DynamicPlatformPlugin {
         this.log.debug('================ IR SEND =================');
         this.log.debug(`Device: ${device.name}`);
         this.log.debug(`Topic : ${irTopic}`);
-        this.log.debug(JSON.stringify(payload));
+        this.log.debug(`Payload: ${JSON.stringify(payload)}`);
         this.log.debug('==========================================');
 
-        this.client.publish(irTopic, JSON.stringify(payload));
-      };
+        this.client.publish(irTopic, JSON.stringify(payload), {}, (err) => {
 
-      // -------------------------
+          if (err) {
+            this.log.error(`MQTT publish error: ${err.message}`);
+          } else {
+            this.log.info('MQTT publish success');
+          }
+        });
+
+        this.log.debug('SENDIR: publish() finished');
+        }, 300);
+};
+
       // ACTIVE
-      // -------------------------
       service.getCharacteristic(this.Characteristic.Active)
         .onGet(() => state.power
           ? this.Characteristic.Active.ACTIVE
           : this.Characteristic.Active.INACTIVE)
         .onSet((value) => {
 
+          this.log.debug(`HK Active SET: ${value}`);
+
           state.power = value === this.Characteristic.Active.ACTIVE;
 
           if (state.power) {
-            state.temp = 24;
             state.mode = this.Characteristic.TargetHeaterCoolerState.COOL;
           }
 
           sendIR();
         });
 
-      // -------------------------
       // MODE
-      // -------------------------
       service.getCharacteristic(this.Characteristic.TargetHeaterCoolerState)
         .onGet(() => state.mode)
         .onSet((value) => {
+
+          this.log.debug(`HK Mode SET: ${value}`);
+
           state.mode = value as number;
           sendIR();
         });
 
-      // -------------------------
-      // CURRENT TEMP (WEATHER)
-      // -------------------------
+      // CURRENT TEMP
       service.getCharacteristic(this.Characteristic.CurrentTemperature)
         .onGet(() => this.weatherTemp);
 
-      // -------------------------
       // TARGET TEMP
-      // -------------------------
       service.getCharacteristic(this.Characteristic.CoolingThresholdTemperature)
         .setProps({ minValue: 16, maxValue: 30, minStep: 1 })
         .onGet(() => state.temp)
         .onSet((value) => {
+
+          this.log.debug(`HK Temp SET: ${value}`);
+
           state.temp = value as number;
           sendIR();
         });
 
-      // -------------------------
       // FAN
-      // -------------------------
       service.getCharacteristic(this.Characteristic.RotationSpeed)
         .onGet(() => state.fan)
         .onSet((value) => {
+
+          this.log.debug(`HK Fan SET: ${value}`);
+
           state.fan = value as number;
           sendIR();
         });
 
-      // -------------------------
       // SWING
-      // -------------------------
       service.getCharacteristic(this.Characteristic.SwingMode)
         .onGet(() => state.swing)
         .onSet((value) => {
+
+          this.log.debug(`HK Swing SET: ${value}`);
+
           state.swing = value as number;
           sendIR();
         });
 
-      // -------------------------
-      // ECONO MODE
-      // -------------------------
+      // ECONO
       service.getCharacteristic(this.Characteristic.LockPhysicalControls)
         .onGet(() => state.econo
           ? this.Characteristic.LockPhysicalControls.CONTROL_LOCK_ENABLED
           : this.Characteristic.LockPhysicalControls.CONTROL_LOCK_DISABLED)
         .onSet((value) => {
+
+          this.log.debug(`HK Econo SET: ${value}`);
 
           state.econo =
             value === this.Characteristic.LockPhysicalControls.CONTROL_LOCK_ENABLED;
