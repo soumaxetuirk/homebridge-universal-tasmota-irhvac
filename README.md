@@ -176,9 +176,9 @@ The plugin intelligently maps HomeKit actions into Tasmota IRHVAC payloads.
 | HomeKit State | IRHVAC Mode |
 |--------------|-------------|
 | COOL | Cool |
-| AUTO | Auto |
+| AUTO | Auto | 
 | HEAT | Ignored |
-
+(Currently auto mode does changes to auto, but homekit interface doesnt respond to it, still need to fix the bug,use siri command to get back to cool mode again.same for heat mode)
 ---
 
 # 🌡️ Current Temperature Handling
@@ -203,18 +203,6 @@ Tested with:
 
 ---
 
-# 🏡 Example Use Cases
-
-Perfect for:
-
-- Wall-mounted split AC units
-- Shared IR blaster setups
-- MQTT smart homes
-- Apple HomeKit automation
-- Tasmota-powered HVAC control
-- Sensorless IR AC installations
-
----
 
 # 🛠️ Debug Logging
 
