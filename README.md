@@ -189,15 +189,13 @@ This provides a more realistic HomeKit experience while keeping the setup lightw
 
 ---
 
-# 📡 Tasmota Compatibility
+#  Future path
 
-Tested with:
 
-- Tasmota IRHVAC
-- IR Blaster devices
-- Mosquitto MQTT
-- Homebridge v1.8+
-- Node.js 18+
+- Implementation of proper Auto Mode
+- Sync with physical remote control (with IR receiver if installed)
+- Option to sync current temperature from different MQTT topic
+- multiple device type support (AC /Heater/Thermostat)
 
 ---
 
@@ -225,4 +223,4 @@ MIT License
 
 # 👨‍💻 Author
 
-Built for advanced Homebridge + Tasmota + MQTT integrations.
+Built for Homebridge + Tasmota IR + MQTT integrations.
