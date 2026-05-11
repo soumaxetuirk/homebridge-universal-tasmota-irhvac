@@ -33,7 +33,11 @@ export class UniversalTasmotaPlatform implements DynamicPlatformPlugin {
 
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
+if (!this.config.devices || !Array.isArray(this.config.devices) || this.config.devices.length === 0) {
 
+  this.log.warn('No devices configured. Plugin inactive.');
+  return;
+}
     this.initMQTT();
 
     this.api.on('didFinishLaunching', () => {
