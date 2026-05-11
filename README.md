@@ -1,6 +1,6 @@
 # 🌡️ Homebridge Universal Tasmota IR HVAC
 
-A clean and powerful Homebridge platform plugin for controlling IR-based air conditioners using **Tasmota IRHVAC** and **MQTT**.
+A  plugin for controlling IR-based air conditioners using **Tasmota IRHVAC** based on IRremoteESP8266 Library and **MQTT**.
 
 Designed for setups using a shared IR blaster, this plugin exposes your AC units as native HomeKit HeaterCooler accessories while sending full IR HVAC payloads through MQTT.
 
@@ -11,8 +11,6 @@ It also supports optional weather-based temperature display using Open-Meteo so 
 # ✨ Features
 
 - ❄️ Native HomeKit HeaterCooler support
-- 📡 Works with Tasmota IRHVAC
-- 🏠 Multiple AC accessories with single IR blaster
 - 🌡️ Weather-based current temperature display
 - 🌀 Fan speed control
 - 🔄 Swing mode support
