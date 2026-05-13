@@ -21,7 +21,7 @@ export class UniversalTasmotaPlatform implements DynamicPlatformPlugin {
   public readonly Characteristic: typeof Characteristic;
 
   private client?: MqttClient;
-
+  private accessories: PlatformAccessory[] = [];
   private weatherTemp = 24;
   private lastWeatherFetch = 0;
 
@@ -86,7 +86,12 @@ if (!this.config.devices || !Array.isArray(this.config.devices) || this.config.d
     });
   }
 
-  configureAccessory(accessory: PlatformAccessory) {}
+  configureAccessory(accessory: PlatformAccessory) {
+
+  this.log.info(`Loaded cached accessory: ${accessory.displayName}`);
+
+  this.accessories.push(accessory);
+}
 
   // -------------------------
   // WEATHER FETCH + PUSH
@@ -165,15 +170,38 @@ if (!this.config.devices || !Array.isArray(this.config.devices) || this.config.d
     for (const device of devices) {
 
       const uuid = this.api.hap.uuid.generate(device.name);
-      const accessory = new this.api.platformAccessory(device.name, uuid);
+     let accessory = this.accessories.find(
+  acc => acc.UUID === uuid
+);
 
-      accessory.getService(this.Service.AccessoryInformation)!
+if (accessory) {
+
+  this.log.info(`Using cached accessory: ${device.name}`);
+
+} else {
+
+  this.log.info(`Creating new accessory: ${device.name}`);
+
+  accessory = new this.api.platformAccessory(device.name, uuid);
+ this.api.registerPlatformAccessories(
+    'homebridge-universal-tasmota-irhvac',
+    'UniversalTasmotaIRHVAC',
+    [accessory],
+  );
+}
+
+      (accessory.getService(this.Service.AccessoryInformation) ||
+ accessory.addService(this.Service.AccessoryInformation))
         .setCharacteristic(this.Characteristic.Manufacturer, device.manufacturer || 'Tasmota')
         .setCharacteristic(this.Characteristic.Model, device.model ?? '1')
         .setCharacteristic(this.Characteristic.SerialNumber, device.serial || '000')
         .setCharacteristic(this.Characteristic.FirmwareRevision, device.version || '1.0');
 
-      const service = accessory.addService(this.Service.HeaterCooler);
+      let service = accessory.getService(this.Service.HeaterCooler);
+
+if (!service) {
+  service = accessory.addService(this.Service.HeaterCooler);
+}
 
       const state = {
         power: false,
@@ -298,17 +326,31 @@ const sendIR = () => {
       service.getCharacteristic(this.Characteristic.CurrentTemperature)
         .onGet(() => this.weatherTemp);
 
-      // TARGET TEMP
-      service.getCharacteristic(this.Characteristic.CoolingThresholdTemperature)
-        .setProps({ minValue: 16, maxValue: 30, minStep: 1 })
-        .onGet(() => state.temp)
-        .onSet((value) => {
+// TARGET TEMP
+service.getCharacteristic(this.Characteristic.CoolingThresholdTemperature)
+  .setProps({ minValue: 16, maxValue: 30, minStep: 1 })
 
-          this.log.debug(`HK Temp SET: ${value}`);
+  .onGet(() => {
 
-          state.temp = value as number;
-          sendIR();
-        });
+    if (state.temp < 16) return 16;
+    if (state.temp > 30) return 30;
+
+    return state.temp;
+  })
+
+  .onSet((value) => {
+
+    this.log.debug(`HK Temp SET: ${value}`);
+
+    let temp = value as number;
+
+    if (temp < 16) temp = 16;
+    if (temp > 30) temp = 30;
+
+    state.temp = temp;
+
+    sendIR();
+  });
 
       // FAN
       service.getCharacteristic(this.Characteristic.RotationSpeed)
@@ -346,12 +388,6 @@ const sendIR = () => {
 
           sendIR();
         });
-
-      this.api.registerPlatformAccessories(
-        'homebridge-universal-tasmota-irhvac',
-        'UniversalTasmotaIRHVAC',
-        [accessory],
-      );
 
       this.log.debug(`Device added: ${device.name}`);
     }
