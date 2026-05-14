@@ -1,10 +1,10 @@
-# 🌡️ Homebridge Universal Tasmota IR HVAC
+# Homebridge Universal Tasmota IR HVAC
 
 A  plugin for controlling IR-based air conditioners using **Tasmota IRHVAC** based on IRremoteESP8266 Library and **MQTT**.
 
-Designed for setups using a shared IR blaster, this plugin exposes your AC units as native HomeKit HeaterCooler accessories while sending full IR HVAC payloads through MQTT.
+Designed for setups using a IR blaster, flashed with tasmota and configured with mqtt.Tasmota receives IRHVAC payload sent to separate topic also sends confirmation of full payload in tele topic.
 
-It also supports optional weather-based temperature display using Open-Meteo so HomeKit can show realistic ambient temperature even when no physical room sensor is available.
+It also displays weather-based temperature using Open-Meteo so HomeKit can show realistic ambient current temperature even when no physical room sensor is available.
 
 ---
 
@@ -37,7 +37,7 @@ inside the Homebridge UI plugin search.
 
 ---
 
-# ⚙️ Homebridge Configuration
+# Homebridge Configuration
 
 Add the following to your Homebridge `config.json`:
 
@@ -49,17 +49,17 @@ Add the following to your Homebridge `config.json`:
     "url": "mqtt://127.0.0.1:1883",
     "username": "mqtt_user",
     "password": "mqtt_password",
-    "topicPublish": "cmnd/Dressing_table/IRHVAC"
+    "topicPublish": "cmnd/devicename/IRHVAC"
   },
 
-  "latitude": 40.7128,
-  "longitude": -74.0060,
+  "latitude": 60.7128,
+  "longitude": 84.0060,
 
   "devices": [
     {
       "name": "Living Room AC",
       "vendor": "LG",
-      "model": "AKB75215403",
+      "model": "1",
       "manufacturer": "LG",
       "serial": "AC001",
       "version": "1.0"
@@ -70,7 +70,7 @@ Add the following to your Homebridge `config.json`:
 
 ---
 
-# 🧾 Configuration Reference
+# Configuration Reference
 
 ## MQTT Settings
 
@@ -88,15 +88,15 @@ Add the following to your Homebridge `config.json`:
   "url": "mqtt://192.168.1.10:1883",
   "username": "mqtt_user",
   "password": "mqtt_password",
-  "topicPublish": "cmnd/Dressing_table/IRHVAC"
+  "topicPublish": "cmnd/DeviceName/IRHVAC"
 }
 ```
 
 ---
 
-# 🌡️ Weather Settings
+# current temperature Settings
 
-The plugin can display outdoor temperature in HomeKit using the Open-Meteo weather API.
+The plugin displays weather station based current temperature in HomeKit using the Open-Meteo weather API.
 
 This is useful for IR-only AC setups where no room temperature sensor is available.
 
@@ -108,8 +108,8 @@ This is useful for IR-only AC setups where no room temperature sensor is availab
 ### Example
 
 ```json
-"latitude": 40.7128,
-"longitude": -74.0060
+"latitude": 50.7128,
+"longitude": 74.0060
 ```
 
 ### Notes
@@ -121,7 +121,7 @@ This is useful for IR-only AC setups where no room temperature sensor is availab
 
 ---
 
-# 🏠 Device Settings
+# Device Settings
 
 Each entry inside the `devices` array creates one HomeKit accessory.
 
@@ -149,7 +149,7 @@ Each entry inside the `devices` array creates one HomeKit accessory.
 
 ---
 
-# 🏡 HomeKit Features
+# HomeKit Features
 
 The plugin exposes the following HomeKit characteristics:
 
@@ -163,12 +163,7 @@ The plugin exposes the following HomeKit characteristics:
 | SwingMode | Swing control |
 | LockPhysicalControls | Eco mode toggle |
 
----
-
-# 🧠 HomeKit State Logic
-
-The plugin intelligently maps HomeKit actions into Tasmota IRHVAC payloads.
-
+--
 ## Target State Mapping
 
 | HomeKit State | IRHVAC Mode |
@@ -177,16 +172,6 @@ The plugin intelligently maps HomeKit actions into Tasmota IRHVAC payloads.
 | AUTO | Auto | 
 | HEAT | Ignored |
 (Currently auto mode does changes to auto, but homekit interface doesnt respond to it, still need to fix the bug,use siri command to get back to cool mode again.same for heat mode)
----
-
-# 🌡️ Current Temperature Handling
-
-HomeKit requires a current temperature value for HeaterCooler accessories.
-
-Since many IR AC setups do not include room sensors, this plugin optionally fetches local weather temperature using Open-Meteo.
-
-This provides a more realistic HomeKit experience while keeping the setup lightweight and sensor-free.
-
 ---
 
 #  Future path
@@ -200,9 +185,9 @@ This provides a more realistic HomeKit experience while keeping the setup lightw
 ---
 
 
-# 🛠️ Debug Logging
+#  Debug Logging
 
-The plugin includes detailed logs for:
+The plugin includes detailed logs in debug mode for:
 
 - MQTT connection
 - IR payload transmission
@@ -211,16 +196,19 @@ The plugin includes detailed logs for:
 - MQTT publish topics
 - Accessory initialization
 
-Useful for troubleshooting and advanced automation setups.
+Useful for troubleshooting and advanced automation setups.if you are facing any issue kindly full debug log.
 
 ---
 
-# 📜 License
+# Special Thanks
 
-MIT License
+- Homebridge Community
+- Developers of Tasmota
+- Developers of IRremote8266 Library
+- 
 
 ---
 
-# 👨‍💻 Author
+# Author
 
-Built for Homebridge + Tasmota IR + MQTT integrations.
+I am a Homebridge user for a long time . Not many people use tasmota based IR blaster which is fairly simple to build or addon to any sonoff / shelly or other esp based devices. This is originally made for my own personal use so any idea or feature request needed let me know , i will try to implement in future bersions
