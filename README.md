@@ -1,5 +1,7 @@
 # Homebridge Universal Tasmota IR HVAC
 [![verified-by-homebridge](https://img.shields.io/badge/homebridge-verified-blueviolet?color=%23491F59&style=for-the-badge&logoColor=%23FFFFFF&logo=homebridge)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
+
+
 A  plugin for controlling IR-based air conditioners using **Tasmota IRHVAC** based on IRremoteESP8266 Library and **MQTT**.
 
 Designed for setups using a IR blaster, flashed with tasmota and configured with mqtt.Tasmota receives IRHVAC payload sent to separate topic also sends confirmation of full payload in tele topic.
