@@ -46,11 +46,6 @@
             "type": "string",
             "title": "Publish Topic",
             "default": "cmnd/tasmota/IRHVAC"
-          },
-          "topicReceiveIR": {
-            "type": "string",
-            "title": "IR Receive Topic (optional)",
-            "default": "tele/tasmota/RESULT"
           }
         }
       },
@@ -79,6 +74,17 @@
               "title": "Model",
               "default": "1"
             },
+            "temperatureTopic": {
+              "title": "Temperature Sensor MQTT Topic",
+              "type": "string",
+              "required": false,
+              "description": "Optional MQTT topic providing actual room temperature"
+            },
+          "topicReceiveIR": {
+            "type": "string",
+            "title": "IR Receive Topic (optional)",
+            "default": "tele/tasmota/RESULT"
+          },
 
             "manufacturer": {
               "type": "string",
