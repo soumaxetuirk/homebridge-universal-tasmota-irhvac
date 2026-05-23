@@ -13,7 +13,8 @@ It also displays weather-based temperature using Open-Meteo so HomeKit can show 
 # ✨ Features
 
 - ❄️ Native HomeKit HeaterCooler support
-- 🌡️ Weather-based current temperature display
+- 🀞  Sync status with Physical IR remote
+- 🌡️ Weather-based or Sensor based current temperature display
 - 🌀 Fan speed control
 - 🔄 Swing mode support
 - 🌿 Eco mode support (Child lock toggle)
@@ -62,6 +63,8 @@ Add the following to your Homebridge `config.json`:
       "name": "Living Room AC",
       "vendor": "LG",
       "model": "1",
+      "temperatureTopic": "home/TEMP_Sensor/temperature",
+      "topicReceiveIR": "tele/IR_Sensor/RESULT",
       "manufacturer": "LG",
       "serial": "AC001",
       "version": "1.0"
@@ -98,9 +101,9 @@ Add the following to your Homebridge `config.json`:
 
 # current temperature Settings
 
-The plugin displays weather station based current temperature in HomeKit using the Open-Meteo weather API.
+The plugin displays weather station based current temperature in HomeKit using the Open-Meteo weather API. Or if you have Temperature sensor installed then just enter temperatureTopic in config. 
 
-This is useful for IR-only AC setups where no room temperature sensor is available.
+Weather station based temperature is considered when TemperatureTopic is not populated. That is useful for IR-only AC setups where no room temperature sensor is available.
 
 | Field | Type | Description |
 |------|------|-------------|
@@ -119,7 +122,7 @@ This is useful for IR-only AC setups where no room temperature sensor is availab
 - Used only for HomeKit Current Temperature
 - Does not affect AC target temperature
 - No constant polling loops are used
-- Temperature is cached and refreshed intelligently
+- Temperature topic should be providing temperature directly not in json format.
 
 ---
 
@@ -204,10 +207,9 @@ Useful for troubleshooting and advanced automation setups.if you are facing any 
 
 # Special Thanks
 
-- Homebridge Community
-- Developers of Tasmota
-- Developers of IRremote8266 Library
-- 
+- Homebridge Community (https://github.com/homebridge)
+- Developers of Tasmota (https://github.com/arendst/tasmota)
+- Developers of IRremote8266 Library (https://github.com/crankyoldgit/irremoteesp8266)
 
 ---
 
