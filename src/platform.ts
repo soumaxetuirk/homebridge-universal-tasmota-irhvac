@@ -59,8 +59,8 @@ if (!this.config.devices || !Array.isArray(this.config.devices) || this.config.d
 
     const clientId = `homebridge_${Math.random().toString(16).slice(2, 10)}`;
 
-    this.log.info('MQTT connecting...');
-    this.log.info(`Broker: ${broker}`);
+    this.log.debug('MQTT connecting...');
+    this.log.debug(`Broker: ${broker}`);
 
     this.client = mqtt.connect(broker, {
       clientId,
@@ -76,7 +76,200 @@ if (!this.config.devices || !Array.isArray(this.config.devices) || this.config.d
     this.client.on('connect', () => {
       this.log.info('MQTT connected');
     });
+this.client.on('message', (topic, message) => {
 
+  const msg = message.toString();
+this.log.debug(`MQTT RX topic=${topic} payload=${msg}`);
+  let json: any;
+
+  try {
+    json = JSON.parse(msg);
+  } catch {
+    json = undefined;
+  }
+
+  for (const accessory of this.accessories) {
+
+    const device = this.config.devices.find(
+      (d: any) => d.name === accessory.displayName
+    );
+
+    if (!device) {
+      continue;
+    }
+
+    const service =
+      accessory.getService(this.Service.HeaterCooler);
+
+    if (!service) {
+      continue;
+    }
+const state = (service as any).__state;
+
+if (!state) {
+  continue;
+}
+    // =====================================================
+    // IR RECEIVE -> HOMEKIT STATE SYNC
+    // =====================================================
+
+    if (
+      device.topicReceiveIR &&
+      topic === device.topicReceiveIR
+    ) {
+
+      const hvac = json?.IrReceived?.IRHVAC;
+
+      // STRICT VALIDATION
+      if (!hvac) {
+        continue;
+      }
+
+      if (
+        hvac.Vendor !== device.vendor ||
+        hvac.Model !== device.model
+      ) {
+        continue;
+      }
+
+      if (
+        hvac.Power !== 'On' &&
+        hvac.Power !== 'Off'
+      ) {
+        continue;
+      }
+
+      if (typeof hvac.Temp !== 'number') {
+        continue;
+      }
+
+      this.log.debug(
+        `${device.name} synced from physical remote`
+      );
+state.power = hvac.Power === 'On';
+
+state.mode =
+  hvac.Mode === 'Cool'
+    ? this.Characteristic.TargetHeaterCoolerState.COOL
+    : this.Characteristic.TargetHeaterCoolerState.AUTO;
+
+let receivedTemp = hvac.Temp;
+
+if (receivedTemp < 16) {
+  receivedTemp = 16;
+}
+
+if (receivedTemp > 30) {
+  receivedTemp = 30;
+}
+
+state.temp = receivedTemp;
+
+if (hvac.FanSpeed === 'Low') {
+  state.fan = 20;
+} else if (hvac.FanSpeed === 'Medium') {
+  state.fan = 50;
+} else if (hvac.FanSpeed === 'High') {
+  state.fan = 80;
+} else {
+  state.fan = 100;
+}
+
+state.swing =
+  hvac.SwingV === 'On'
+    ? this.Characteristic.SwingMode.SWING_ENABLED
+    : this.Characteristic.SwingMode.SWING_DISABLED;
+      // POWER
+      service.updateCharacteristic(
+        this.Characteristic.Active,
+        hvac.Power === 'On'
+          ? this.Characteristic.Active.ACTIVE
+          : this.Characteristic.Active.INACTIVE
+      );
+
+      // MODE
+      let hkMode =
+        this.Characteristic.TargetHeaterCoolerState.AUTO;
+
+      if (hvac.Mode === 'Cool') {
+
+        hkMode =
+          this.Characteristic.TargetHeaterCoolerState.COOL;
+      }
+
+      service.updateCharacteristic(
+        this.Characteristic.TargetHeaterCoolerState,
+        hkMode
+      );
+
+      // TEMP
+      service.updateCharacteristic(
+        this.Characteristic.CoolingThresholdTemperature,
+receivedTemp
+      );
+
+      // FAN
+      let fan = 100;
+
+      if (hvac.FanSpeed === 'Low') {
+        fan = 20;
+      } else if (hvac.FanSpeed === 'Medium') {
+        fan = 50;
+      } else if (hvac.FanSpeed === 'High') {
+        fan = 80;
+      }
+
+      service.updateCharacteristic(
+        this.Characteristic.RotationSpeed,
+        fan
+      );
+
+      // SWING
+      service.updateCharacteristic(
+        this.Characteristic.SwingMode,
+        hvac.SwingV === 'On'
+          ? this.Characteristic.SwingMode.SWING_ENABLED
+          : this.Characteristic.SwingMode.SWING_DISABLED
+      );
+
+      continue;
+    }
+
+    // =====================================================
+    // MQTT TEMPERATURE SENSOR
+    // =====================================================
+
+    if (!device.temperatureTopic) {
+      continue;
+    }
+
+    if (topic !== device.temperatureTopic) {
+      continue;
+    }
+
+    const temp = parseFloat(msg);
+
+    if (isNaN(temp)) {
+
+      this.log.warn(
+        `Invalid temperature payload: ${msg}`
+      );
+
+      continue;
+    }
+
+    (service as any).__currentTemp = temp;
+
+    service.updateCharacteristic(
+      this.Characteristic.CurrentTemperature,
+      temp
+    );
+
+    this.log.info(
+      `${device.name} sensor temp updated: ${temp}°C`
+    );
+  }
+});
     this.client.on('error', (err) => {
       this.log.error('MQTT error:', err.message);
     });
@@ -210,10 +403,28 @@ if (!service) {
         fan: 50,
         swing: this.Characteristic.SwingMode.SWING_DISABLED,
         econo: false,
+        currentTemp: undefined as number | undefined,
       };
-
+(service as any).__state = state;
       this.updateWeatherAndPush(service);
 
+if (device.temperatureTopic && this.client) {
+
+  this.log.info(
+    `Subscribing temp topic for ${device.name}: ${device.temperatureTopic}`
+  );
+
+  this.client.subscribe(device.temperatureTopic);
+}
+
+if (device.topicReceiveIR && this.client) {
+
+  this.log.info(
+    `Subscribing IR topic for ${device.name}: ${device.topicReceiveIR}`
+  );
+
+  this.client.subscribe(device.topicReceiveIR);
+}
       const getFan = () => {
         if (state.fan <= 20) return "Low";
         if (state.fan <= 60) return "Medium";
@@ -324,7 +535,16 @@ const sendIR = () => {
 
       // CURRENT TEMP
       service.getCharacteristic(this.Characteristic.CurrentTemperature)
-        .onGet(() => this.weatherTemp);
+  .onGet(() => {
+
+    const mqttTemp = (service as any).__currentTemp;
+
+    if (typeof mqttTemp === 'number') {
+      return mqttTemp;
+    }
+
+    return this.weatherTemp;
+  });
 
 // TARGET TEMP
 service.getCharacteristic(this.Characteristic.CoolingThresholdTemperature)
