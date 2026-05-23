@@ -179,9 +179,9 @@ The plugin exposes the following HomeKit characteristics:
 #  Future path
 
 
-- Implementation of proper Auto Mode
-- Sync with physical remote control (with IR receiver if installed)
-- Option to sync current temperature from different MQTT topic
+- Implementation of proper Auto Mode.
+- Sync with physical remote control (with IR receiver if installed).(Supported in V 2.0)
+- Option to sync current temperature from different MQTT topic.(Supported in V 2.0)
 - multiple device type support (AC /Heater/Thermostat)
 
 ---
