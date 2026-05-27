@@ -163,7 +163,9 @@ if (receivedTemp > 30) {
   receivedTemp = 30;
 }
 
-state.temp = receivedTemp;
+if (hvac.Power !== 'Off') {
+  state.temp = receivedTemp;
+}
 
 if (hvac.FanSpeed === 'Low') {
   state.fan = 20;
@@ -201,11 +203,33 @@ state.swing =
         this.Characteristic.TargetHeaterCoolerState,
         hkMode
       );
+      let currentState =
+        this.Characteristic.CurrentHeaterCoolerState.IDLE;
 
+      if (hvac.Power === 'Off') {
+
+        currentState =
+          this.Characteristic.CurrentHeaterCoolerState.INACTIVE;
+
+      } else if (hvac.Mode === 'Cool') {
+
+        currentState =
+          this.Characteristic.CurrentHeaterCoolerState.COOLING;
+      }
+
+      service.updateCharacteristic(
+        this.Characteristic.CurrentHeaterCoolerState,
+        currentState
+      );
       // TEMP
       service.updateCharacteristic(
         this.Characteristic.CoolingThresholdTemperature,
-receivedTemp
+        receivedTemp
+      );
+
+      service.updateCharacteristic(
+        this.Characteristic.HeatingThresholdTemperature,
+        receivedTemp
       );
 
       // FAN
@@ -432,11 +456,17 @@ if (device.topicReceiveIR && this.client) {
         return "Auto";
       };
 
-      const getMode = () => {
-        if (state.mode === this.Characteristic.TargetHeaterCoolerState.COOL) return "Cool";
-        if (state.mode === this.Characteristic.TargetHeaterCoolerState.AUTO) return "Auto";
-        return "Auto";
-      };
+const getMode = () => {
+  if (state.mode === this.Characteristic.TargetHeaterCoolerState.COOL) {
+    return "Cool";
+  }
+
+  if (state.mode === this.Characteristic.TargetHeaterCoolerState.AUTO) {
+    return "Auto";
+  }
+
+  return undefined;
+};
 
       // -------------------------
       // IR SEND
@@ -467,18 +497,29 @@ const sendIR = () => {
 
         this.log.debug('SENDIR: before weather update');
 
-        await this.updateWeatherAndPush(service);
+await this.updateWeatherAndPush(service);
 
-        this.log.debug('SENDIR: after weather update');
+this.log.debug('SENDIR: after weather update');
 
-        const payload = {
+if (
+  state.mode ===
+  this.Characteristic.TargetHeaterCoolerState.HEAT
+) {
+  this.log.debug('HEAT mode ignored');
+  return;
+}
+
+const payload = {
           Vendor: device.vendor || "LG",
           Model: device.model || "1",
 
           Power: state.power ? "On" : "Off",
           Mode: getMode(),
 
-          Temp: state.temp,
+          Temp:
+  state.mode === this.Characteristic.TargetHeaterCoolerState.AUTO
+    ? 24
+    : state.temp,
           FanSpeed: getFan(),
 
           SwingV: state.swing === this.Characteristic.SwingMode.SWING_ENABLED ? "On" : "Off",
@@ -515,10 +556,6 @@ const sendIR = () => {
 
           state.power = value === this.Characteristic.Active.ACTIVE;
 
-          if (state.power) {
-            state.mode = this.Characteristic.TargetHeaterCoolerState.COOL;
-          }
-
           sendIR();
         });
 
@@ -532,7 +569,23 @@ const sendIR = () => {
           state.mode = value as number;
           sendIR();
         });
+      // CURRENT HVAC STATE
+      service.getCharacteristic(this.Characteristic.CurrentHeaterCoolerState)
+        .onGet(() => {
 
+          if (!state.power) {
+            return this.Characteristic.CurrentHeaterCoolerState.INACTIVE;
+          }
+
+          if (
+            state.mode ===
+            this.Characteristic.TargetHeaterCoolerState.COOL
+          ) {
+            return this.Characteristic.CurrentHeaterCoolerState.COOLING;
+          }
+
+          return this.Characteristic.CurrentHeaterCoolerState.IDLE;
+        });
       // CURRENT TEMP
       service.getCharacteristic(this.Characteristic.CurrentTemperature)
   .onGet(() => {
@@ -571,7 +624,31 @@ service.getCharacteristic(this.Characteristic.CoolingThresholdTemperature)
 
     sendIR();
   });
+// HEATING TARGET TEMP
+service.getCharacteristic(this.Characteristic.HeatingThresholdTemperature)
+  .setProps({ minValue: 16, maxValue: 30, minStep: 1 })
 
+  .onGet(() => {
+
+    if (state.temp < 16) return 16;
+    if (state.temp > 30) return 30;
+
+    return state.temp;
+  })
+
+  .onSet((value) => {
+
+    this.log.debug(`HK Heat Temp SET: ${value}`);
+
+    let temp = value as number;
+
+    if (temp < 16) temp = 16;
+    if (temp > 30) temp = 30;
+
+    state.temp = temp;
+
+    sendIR();
+  });
       // FAN
       service.getCharacteristic(this.Characteristic.RotationSpeed)
         .onGet(() => state.fan)
