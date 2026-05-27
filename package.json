@@ -2,10 +2,10 @@
   "name": "homebridge-universal-tasmota-irhvac",
   "displayName": "Universal Tasmota IR HVAC",
   "type": "module",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Homebridge plugin for Tasmota IR HVAC via MQTT",
   "author": "Soum Axetuirk",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "homepage": "https://github.com/soumaxetuirk/homebridge-universal-tasmota-irhvac#readme",
   "repository": {
     "type": "git",
