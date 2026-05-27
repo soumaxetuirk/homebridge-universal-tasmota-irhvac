@@ -178,13 +178,12 @@ The plugin exposes the following HomeKit characteristics:
 | COOL | Cool |
 | AUTO | Auto | 
 | HEAT | Ignored |
-(Currently auto mode does changes to auto, but homekit interface doesnt respond to it, still need to fix the bug,use siri command to get back to cool mode again.same for heat mode)
 ---
 
 #  Future path
 
 
-- Implementation of proper Auto Mode.
+- Implementation of proper Auto Mode.(Supported in V 2.1.0)
 - Sync with physical remote control (with IR receiver if installed).(Supported in V 2.0)
 - Option to sync current temperature from different MQTT topic.(Supported in V 2.0)
 - multiple device type support (AC /Heater/Thermostat)
