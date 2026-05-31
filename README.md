@@ -211,9 +211,9 @@ Useful for troubleshooting and advanced automation setups.if you are facing any 
 - Homebridge Community (https://github.com/homebridge)
 - Developers of Tasmota (https://github.com/arendst/tasmota)
 - Developers of IRremote8266 Library (https://github.com/crankyoldgit/irremoteesp8266)
-
+- IR Blaster mod for Sonoff Basic (https://github.com/altelch/SonoffIR/tree/master)
 ---
 
 # Author
 
-I am a Homebridge user for a long time . Not many people use tasmota based IR blaster which is fairly simple to build or addon to any sonoff / shelly or other esp based devices. This is originally made for my own personal use so any idea or feature request needed let me know , i will try to implement in future bersions
+I am a Homebridge user for a long time . Not many people use tasmota based IR blaster which is fairly simple to build or addon to any sonoff / shelly or other esp based devices( Altelch Sonoff IR guide). This is originally made for my own personal use so any idea or feature request needed let me know , i will try to implement in future bersions
