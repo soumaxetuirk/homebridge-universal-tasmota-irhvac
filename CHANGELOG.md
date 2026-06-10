@@ -1,3 +1,18 @@
+v2.1.2
+
+added
+* Readme pushed to npm
+
+---
+
+v2.1.1
+
+Added
+* Code fix for mode change
+* Optimisation of Auto mode
+
+---
+
 V 2.1.0
 
 Added
